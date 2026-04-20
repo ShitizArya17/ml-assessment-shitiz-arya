@@ -50,26 +50,7 @@ simpler model with the right one. This is sometimes called "Goodhart's Law"
 ---
 
 ### B1(c) — Against a Single Global Model (2 marks)
-
-**Problem with one global model:** A rural store's customers respond 
-differently to promotions than urban ones. A BOGO deal might work well 
-in urban areas with high footfall but fail in rural stores with different 
-demographics and purchasing power. Pooling all data forces the model to 
-learn an "average" response that applies to no store particularly well.
-
-**Alternative Strategy — Store Cluster + Segment Models:**
-
-1. **Cluster stores** into groups using K-Means on attributes like 
-   `location_type`, `competition_density`, `average_footfall`, and 
-   `store_size`.
-2. **Train one model per cluster** — each model learns patterns specific 
-   to stores with similar characteristics.
-3. **Optionally: Hierarchical / Mixed-Effects model** — a global model 
-   with store-specific intercepts (random effects), allowing shared 
-   learning while respecting store-level variation.
-
-This approach respects heterogeneity across stores while avoiding the 
-data sparsity problem of training 50 completely separate models.
+I recommend a store-cluster model strategy. Using K-Means on store attributes (location type, footfall, competition density, store size), stores are grouped into 3–4 clusters, and one Random Forest model is trained per cluster. This is preferred over the hierarchical model because it is simpler to implement, easier to explain to the marketing team, and each cluster has sufficient data (10–15 stores × 36 months ≈ 400–500 rows per model) to train reliably.
 
 ---
 
@@ -130,27 +111,7 @@ and whether a temporal split is needed (it is).
 
 ### B2(c) — Handling 80% Non-Promotion Records (2 marks)
 
-**The imbalance problem:**  
-If 80% of transactions have no promotion, the model can learn to predict 
-"promotion doesn't matter much" simply by fitting the majority pattern — 
-leading to underestimation of promotion effects.
-
-**Steps to address it:**
-
-1. **Stratified sampling:** Ensure both promotion and no-promotion records 
-   are represented proportionally in train/test splits.
-
-2. **Separate modelling:** Train one model to predict baseline sales 
-   (no promotion) and a second to predict the **uplift** caused by each 
-   promotion type. The final recommendation = baseline + maximum uplift.
-
-3. **Oversampling promotion records** using techniques like SMOTE 
-   (for classification variants) or weighted regression (assign higher 
-   loss weight to promotion observations).
-
-4. **Feature engineering:** Create a binary `has_promotion` column and 
-   interaction terms to help the model explicitly distinguish between 
-   the two regimes.
+I recommend a separate uplift modelling approach. One baseline model predicts sales with no promotion. A second model predicts the incremental uplift per promotion type. The final recommendation = whichever promotion yields the highest predicted uplift over baseline. This is more principled than oversampling because it explicitly models the causal mechanism rather than artificially distorting the data distribution.
 
 ---
 
